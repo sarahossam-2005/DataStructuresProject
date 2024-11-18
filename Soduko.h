@@ -12,13 +12,17 @@ class Sudoku
 {
 private:
     // Size of the Sudoku grid 
-    int gridSize;  
+    int gridSize;
+    int gridrows;  
+    int gridcols; 
 
     // Size of each sub-grid 
     int subGridSize;   
 
-    //2D vector 
-    vector<vector<int>> sudokuGrid;  
+    //2D Dynamic array 
+    //Maybe later, we will implement a vector data structure and use it here 
+
+    int** grid;
 
     // Helper function
     // Checks if it's safe to place num into a position
