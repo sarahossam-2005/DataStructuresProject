@@ -12,6 +12,9 @@ using namespace Gdiplus;
 
 void SudokuGame::initializeGame(level level_m)
 {
+    current_cell_i = -1;
+    current_cell_j = -1;
+
     // Initialize the Sudoku grid based on the difficulty level
     switch (level_m) {
     case Easy: {
@@ -28,6 +31,16 @@ void SudokuGame::initializeGame(level level_m)
         };
         memcpy(grid, easyPuzzle, sizeof(grid));
         break;
+        for (int i = 0; i <= 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (easyPuzzle[i][j] != 0)
+                {
+                   
+                }
+            }
+        }
     }
     case Medium: {
         int mediumPuzzle[9][9] = {
@@ -74,18 +87,27 @@ void SudokuGame::initializeGame(level level_m)
         memcpy(grid, easyPuzzle, sizeof(grid));
         break;
     }
+    //TODO SARA Init grid_codes
+    for (int i = 0; i <= 9; i++)
+    {
+        for (int j = 0; j < 9; j++)
+        {
+            if (grid[i][j] != 0)
+            {
+                grid_code[i][j] = 'i';
+            }
+            else
+            {
+                grid_code[i][j] = 'u';
+            }
+        }
+    }   
 }
 
 void SudokuGame::displayGame(HWND hWnd)
 {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
-
-    // Constants for the grid
-    int gridSize = 450;    // Total size of the grid in pixels
-    int cellSize = gridSize / 9;  // Size of one cell
-    int startX = 50;       // Starting X coordinate
-    int startY = 50;       // Starting Y coordinate
 
     // Draw the grid
     for (int i = 0; i <= 9; ++i) {
@@ -109,34 +131,31 @@ void SudokuGame::displayGame(HWND hWnd)
         DeleteObject(hPen);
     }
 
+
     // Initialize GDI+ Graphics
     Graphics graphics(hdc);
 
-    // Create a string.
-    WCHAR string[] = L"Sample Text";
+    //show current cell
+    if (current_cell_i > -1 && current_cell_j > -1){
+        SolidBrush highlightBrush(Color(50, 0, 0, 0));
+        graphics.FillRectangle(&highlightBrush, startX + current_cell_j * cellSize, startY + current_cell_i * cellSize, cellSize, cellSize);
+    }
 
-    // Initialize arguments.
-
-    Font myFont(GenericSansSerifFontFamily, 16);
-    PointF origin(0.0f, 0.0f);
-    SolidBrush blackBrush(Color(255, 0, 0, 0));
-
-    // Draw string.
-    graphics.DrawString(
-        string,
-        11,
-        &myFont,
-        origin,
-        &blackBrush);
-    
-    // Create the font and brush for drawing numbers
     FontFamily family(L"Arial");
-    Font font(&family, 48);  // Font size of 48
+    Font font(&family, 24);  // Font size of 48
     SolidBrush brush(Color(255, 0, 0, 0));  // Black brush for text
 
+    //TODO SARA make new more brushes for blue and red
+    SolidBrush brush1(Color(255, 0, 0, 255)); //blue
+    SolidBrush brush2(Color(255, 255, 0, 0));  // red
+
+    
+
     // Loop through the grid and draw numbers
+    
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
+
             if (grid[i][j] != 0) {  // Only draw if the cell is not empty
                 // Calculate the position of the cell
                 RECT rect;
@@ -144,18 +163,117 @@ void SudokuGame::displayGame(HWND hWnd)
                 rect.top = startY + i * cellSize;     // Top position of the cell
                 rect.right = rect.left + cellSize;    // Right position (left + cell size)
                 rect.bottom = rect.top + cellSize;    // Bottom position (top + cell size)
+                
+               
 
                 // Convert the grid value to a character and draw it
                 wchar_t str[2] = { (wchar_t)(grid[i][j] + L'0'), L'\0' };  // Convert int to wchar_t
 
                 // Create a point for drawing the text in the center of the cell
-                PointF point((REAL)(rect.left + rect.right) / 2 - 12, (REAL)(rect.top + rect.bottom) / 2 - 24);  // Adjust position for font centering
-
+                PointF point((REAL)(rect.left + rect.right) / 2 - 12, (REAL)(rect.top + rect.bottom) / 2 - 16);  // Adjust position for font centering
+                
                 // Draw the text with the custom font
-                graphics.DrawString(str, 1, &font, point, &brush);
+                //TODO SARA choose bruens based on grid_code
+                if(grid_code[i][j]=='i')
+                    graphics.DrawString(str, 1, &font, point, &brush);
+                else if(grid_code[i][j] == 'u')
+                    graphics.DrawString(str, 1, &font, point, &brush1);
+                 else if  (grid_code[i][j] == 'e')
+                    graphics.DrawString(str, 1, &font, point, &brush2);
+
             }
         }
     }
 
     EndPaint(hWnd, &ps);
+}
+
+void SudokuGame::handleClick(HWND hWnd, int x, int y) {
+    if (x > startX && x < startX + gridSize && y > startY && y < startY + gridSize) {
+        int new_j= (x - startX) / cellSize;
+        int new_i = (y - startY) / cellSize;
+        if (new_j != current_cell_j || new_i != current_cell_i) {
+            current_cell_j = new_j;
+            current_cell_i = new_i;
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+    }
+}
+
+void SudokuGame::handleKeyPress(HWND hWnd, int keycode)
+{
+    //TODO do not update the cell if its grid_code is "i"
+
+    if (grid_code[current_cell_i][current_cell_j] != 'i') 
+    {
+        if (keycode >= 49 && (char)keycode <= 57)
+        {
+            grid[current_cell_i][current_cell_j] = keycode - 48;
+            this->updateGridCodes();
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+        if (keycode >= 97 && (char)keycode <= 105) {
+            grid[current_cell_i][current_cell_j] = keycode - 96;
+            this->updateGridCodes(); 
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+    }
+}
+
+void SudokuGame::updateGridCodes()
+{
+    //TODO SARA
+    if (current_cell_i < 0 || current_cell_j < 0)
+        return;
+
+    //Check 3x3 mini grid
+    int subgridRow = (current_cell_i / 3) * 3;
+    int subgridCol = (current_cell_j / 3) * 3;
+    grid_code[current_cell_i][current_cell_j] = 'u';
+
+    for (int i = subgridRow; i < subgridRow + 3; i++)
+    {
+        for (int j = subgridCol; j < subgridCol + 3; j++)
+        {
+            if ((i != current_cell_i || j != current_cell_j) && grid[i][j] == grid[current_cell_i][current_cell_j])
+            {
+                grid_code[current_cell_i][current_cell_j] = 'e';
+                return;
+            }
+        }
+        //check the row
+        for (int j = 0; j < 9; j++)
+        {
+            if (current_cell_j != j && grid[current_cell_i][current_cell_j] == grid[current_cell_i][j])
+            {
+                grid_code[current_cell_i][current_cell_j] = 'e';
+                return;
+            }
+        }
+
+        //check the column
+        for (int i = 0; i < 9; i++)
+        {
+            if (i != current_cell_i && grid[current_cell_i][current_cell_j] == grid[i][current_cell_j])
+            {
+                if(grid_code[current_cell_i][current_cell_j] == 'u')
+                    grid_code[current_cell_i][current_cell_j] = 'e';
+                return;
+            }
+        }
+    }
+}
+bool SudokuGame::isSolved()
+{
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 9; j++)
+        {
+            if (grid_code[i][j] == 'e' || grid[i][j]==0)
+            {
+                return false;
+            } 
+        }
+    }
+    return true;
 }

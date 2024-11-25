@@ -1,10 +1,15 @@
 // Soduko.cpp : Defines the entry point for the application.
-//
 
 #include "framework.h"
 #include "Program.h"
+#include <ObjIdl.h>
+#include <Windows.h>
+#include <windowsx.h>
+#include <gdiplus.h>
 #include "SodukoGame.h"
 
+using namespace std;
+using namespace Gdiplus;
 
 #define MAX_LOADSTRING 100
 
@@ -28,6 +33,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     // TODO: Place code here.
     game = new SudokuGame();  // Create game object with Easy level
@@ -58,6 +67,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    GdiplusShutdown(gdiplusToken);
     return (int) msg.wParam;
 }
 
@@ -79,7 +89,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SODUKO));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDC_SODUKO));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_SODUKO);
@@ -131,9 +141,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+
+    case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // Parse the menu selections:
+        switch (wmId)
+        {
+        case IDM_ABOUT:
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+
+        case ID_NEWGAME_EASY:
+
+            break;
+
+        case ID_NEWGAME_MEDIUM:
+            break;
+
+        case ID_NEWGAME_HARD:
+            break;
+
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+    }
+    break;
     case WM_CREATE:
     {
+        //TODO SARA handle new game menu here
         // Get the window instance handle and create the Sudoku game
+        game = new SudokuGame();
+        game->initializeGame(Easy);
+        if (!game)
+        {
+            MessageBox(hWnd, L"Failed to initialize Sudoku game.", L"Error", MB_OK | MB_ICONERROR);
+            return -1; 
+        }
+
         break;
     }
 
@@ -143,6 +191,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+        // Handle mouse left button click
+    case WM_LBUTTONDOWN:
+    {
+        int xPos = GET_X_LPARAM(lParam); // Get the x-coordinate of the click
+        int yPos = GET_Y_LPARAM(lParam); // Get the y-coordinate of the click
+        // Call your game logic to handle the click at (xPos, yPos)
+        game->handleClick(hWnd, xPos, yPos);
+        break;
+    }
+
+    // Handle keyboard key press
+    case WM_KEYDOWN:
+    {
+        int keyCode = static_cast<int>(wParam); // Get the virtual key code
+        // Call your game logic to handle the key press
+        game->handleKeyPress(hWnd, keyCode);
+        break;
+    }
+
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
