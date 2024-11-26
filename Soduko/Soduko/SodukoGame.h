@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cmath>
 #include <windows.h>
+#include <stack>
+#include <utility>
 
 using namespace std;
 
@@ -15,6 +17,10 @@ private:
     char grid_code[9][9];
     int current_cell_i;
     int current_cell_j;
+    bool start_solver = false;
+    int current_guess[9][9] = { 0 };
+    stack<std::pair<int, int>> cell_stack;
+    bool solving_complete = false;
 
     //constants
     const int gridSize = 450;    // Total size of the grid in pixels
@@ -36,6 +42,10 @@ public:
     void handleKeyPress(HWND hWnd, int keycode);
 
     void updateGridCodes();
+
+    void update_solver(HWND hWnd);
+
+    bool isValid(int row, int col, int num);
 
     // Solves the Sudoku using backtracking
     bool solve();

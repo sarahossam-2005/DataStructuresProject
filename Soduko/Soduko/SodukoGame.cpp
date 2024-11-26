@@ -5,6 +5,7 @@
 #include <gdiplusfont.h>
 #include <gdiplusfontfamily.h>
 
+
 #pragma comment(lib, "gdiplus.lib")
 
 using namespace std;
@@ -14,6 +15,7 @@ void SudokuGame::initializeGame(level level_m)
 {
     current_cell_i = -1;
     current_cell_j = -1;
+    start_solver = false;
 
     // Initialize the Sudoku grid based on the difficulty level
     switch (level_m) {
@@ -263,6 +265,7 @@ void SudokuGame::updateGridCodes()
         }
     }
 }
+
 bool SudokuGame::isSolved()
 {
     for (int i = 0; i < 9; i++)
@@ -276,4 +279,117 @@ bool SudokuGame::isSolved()
         }
     }
     return true;
+}
+
+//void SudokuGame::update_solver(HWND hWnd) {
+//    //if (!start_solver)
+//    //    return;
+//    for (int i = 0; i < 9; i++) {
+//        for (int j = 0; j < 9; j++) {
+//            if (grid[i][j] == 0) {
+//                grid[i][j] = 1;
+//                current_cell_i = i;
+//                current_cell_j = j;
+//                this->updateGridCodes();
+//                return;
+//            }
+//        }
+//    }
+//}
+
+// Helper function to check if num can be placed at grid[i][j]
+bool SudokuGame::isValid(int row, int col, int num) {
+    // Check if num is not in the current row, column, or 3x3 subgrid
+    for (int x = 0; x < 9; x++) {
+        if (grid[row][x] == num || grid[x][col] == num)
+            return false;
+    }
+    int startRow = row - row % 3, startCol = col - col % 3;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (grid[i + startRow][j + startCol] == num)
+                return false;
+        }
+    }
+    return true;
+}
+
+void SudokuGame::update_solver(HWND hWnd) {
+    //if (!start_solver || solving_complete)
+     //   return;
+
+    
+    for (int i = 0; i < 9; i++) {
+        bool found = false;
+        for (int j = 0; j < 9; j++) {
+            if (grid[i][j] == 0) {
+                current_cell_i = i;
+                current_cell_j = j;
+                current_guess[i][j] = current_guess[i][j] > 0 ? current_guess[i][j] : 1;
+                found = true;
+                break;
+            }
+        }
+        if (found) break;
+    }
+    // No empty cells, puzzle is complete
+    if (current_cell_i == -1) {
+        solving_complete = true;
+        return;
+    }
+    
+
+    int i = current_cell_i;
+    int j = current_cell_j;
+    int num = current_guess[i][j];
+
+    while (num <= 9) {
+        if (isValid(i, j, num)) {
+            grid[i][j] = num;
+            cell_stack.push({ i, j });
+            current_guess[i][j] = num;
+
+            // Find next empty cell
+            bool found_next = false;
+            for (int ii = i; ii < 9; ii++) {
+                for (int jj = (ii == i ? j + 1 : 0); jj < 9; jj++) {
+                    if (grid[ii][jj] == 0) {
+                        current_cell_i = ii;
+                        current_cell_j = jj;
+                        current_guess[ii][jj] = 1;
+                        found_next = true;
+                        break;
+                    }
+                }
+                if (found_next)
+                    break;
+            }
+            if (!found_next) {
+                // Puzzle solved
+                solving_complete = true;
+            }
+            this->updateGridCodes();
+            return; // Wait for next update_solver call
+        }
+        num++;
+    }
+
+    // No valid number found, need to backtrack
+    grid[i][j] = 0;
+    current_guess[i][j] = 1; // Reset for next time
+    if (!cell_stack.empty()) {
+        // Backtrack to previous cell
+        auto temp = cell_stack.top();
+        auto prev_i = temp.first;
+        auto prev_j = temp.second;
+        cell_stack.pop();
+        current_cell_i = prev_i;
+        current_cell_j = prev_j;
+        current_guess[prev_i][prev_j]++;
+        this->updateGridCodes();
+    }
+    else {
+        // No solution
+        solving_complete = true;
+    }
 }
