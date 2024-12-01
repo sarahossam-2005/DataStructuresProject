@@ -30,12 +30,18 @@
     <ClInclude Include="SodukoGame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="myStack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Program.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SodukoGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="myStack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

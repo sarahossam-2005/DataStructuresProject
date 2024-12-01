@@ -127,7 +127,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
 
-   SetTimer(hWnd, 1, 1000, TimerProc);
+   SetTimer(hWnd, 1, 100, TimerProc);
 
    return TRUE;
 }
@@ -146,11 +146,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
-        // Parse the menu selections:
         switch (wmId)
         {
         case IDM_ABOUT:
@@ -158,36 +156,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case IDM_EXIT:
             DestroyWindow(hWnd);
-            break;
+            break; case ID_NEWGAME_EASY:
+                game->initializeGame(Easy);
+                InvalidateRect(hWnd, NULL, TRUE);
+                UpdateWindow(hWnd);
+                break;
 
-        case ID_NEWGAME_EASY:
+            case ID_NEWGAME_MEDIUM:
+                game->initializeGame(Medium);
+                InvalidateRect(hWnd, NULL, TRUE);
+                UpdateWindow(hWnd);
+                break;
 
-            break;
+            case ID_NEWGAME_HARD:
+                game->initializeGame(Hard);
+                InvalidateRect(hWnd, NULL, TRUE);
+                UpdateWindow(hWnd);
+                break;
+            case ID_Start_Solver: 
+                game->clearErrors(); 
+                game->start_solver = true;
+                break;
 
-        case ID_NEWGAME_MEDIUM:
-            break;
-
-        case ID_NEWGAME_HARD:
-            break;
-
+            case ID_SHOW_SOLUTION:
+                game->Show_Solution(hWnd);
+                InvalidateRect(hWnd, NULL, TRUE);
+                UpdateWindow(hWnd);
+                break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
+        break;
     }
-    break;
+
     case WM_CREATE:
     {
         //TODO SARA handle new game menu here
         // Get the window instance handle and create the Sudoku game
-        game = new SudokuGame();
         game->initializeGame(Easy);
+        break;
         if (!game)
         {
             MessageBox(hWnd, L"Failed to initialize Sudoku game.", L"Error", MB_OK | MB_ICONERROR);
-            return -1; 
+            return -1;
         }
-
-        break;
     }
 
     case WM_PAINT:
@@ -242,7 +254,9 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 VOID TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
+    if (!game->start_solver || game->isSolved())
+        return;
     // Your timer's logic here
     game->update_solver(hwnd);
-    InvalidateRect(hwnd, NULL, TRUE); // Redraw the window
+    InvalidateRect(hwnd, NULL, TRUE); 
 }

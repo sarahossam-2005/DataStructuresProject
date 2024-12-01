@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <windows.h>
-#include <stack>
+#include "myStack.h"
 #include <utility>
 
 using namespace std;
@@ -17,9 +17,8 @@ private:
     char grid_code[9][9];
     int current_cell_i;
     int current_cell_j;
-    bool start_solver = false;
     int current_guess[9][9] = { 0 };
-    stack<std::pair<int, int>> cell_stack;
+    myStack <std::pair<int, int>> cell_stack;
     bool solving_complete = false;
 
     //constants
@@ -29,7 +28,8 @@ private:
     const int startY = 50;       // Starting Y coordinate
 
 public:
-
+    bool start_solver = false;
+    int error_count = 0;
     // Constructor
     SudokuGame() : level_m(Easy) {};
 
@@ -43,6 +43,10 @@ public:
 
     void updateGridCodes();
 
+    void clearErrors();
+
+    void updateCellCode(int cell_i, int cell_j);
+
     void update_solver(HWND hWnd);
 
     bool isValid(int row, int col, int num);
@@ -50,8 +54,10 @@ public:
     // Solves the Sudoku using backtracking
     bool solve();
 
+    void GameOver();
     bool isSolved();
 
+    void Show_Solution(HWND);
     //bool isAvailable(int row_index, int col_index);
 
     // Backtracking to be called in the solve function
