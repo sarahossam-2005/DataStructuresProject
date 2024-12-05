@@ -17,82 +17,38 @@ void SudokuGame::initializeGame(level level_m)
 {
     current_cell_i = -1;
     current_cell_j = -1;
+    error_count = 0;
     start_solver = false;
+    solving_complete = false;
+    score = 100;
+    hint_count = 0;
     for (int i = 0; i < 9; i++)
         for (int j = 0; j < 9; j++)
             current_guess[i][j] = 0;
-    cell_stack = myStack<std::pair<int, int>>();
+    cell_stack.clear();
 
     // Initialize the Sudoku grid based on the difficulty level
     switch (level_m) {
     case Easy: {
-        int easyPuzzle[9][9] = {
-            {9, 4, 2, 1, 6, 3, 8, 0, 7},
-            {5, 0, 6, 2, 0, 7, 9, 4, 1},
-            {8, 7, 1, 9, 5, 4, 0, 3, 0},
-            {3, 2, 0, 8, 1, 9, 4, 0, 5},
-            {1, 0, 4, 3, 2, 6, 7, 9, 0},
-            {6, 9, 8, 7, 0, 5, 1, 2, 3},
-            {2, 6, 5, 4, 0, 1, 3, 8, 9},
-            {0, 8, 0, 6, 3, 2, 5, 1, 4},
-            {4, 1, 0, 5, 9, 8, 6, 7, 0}
-        };
-        memcpy(grid, easyPuzzle, sizeof(grid));
+        max_errors = 3;
+        max_hints = 3;
+        InitGrid(65);
         break;
-        for (int i = 0; i <= 9; i++)
-        {
-            for (int j = 0; j < 9; j++)
-            {
-                if (easyPuzzle[i][j] != 0)
-                {
-                   
-                }
-            }
-        }
     }
     case Medium: {
-        int mediumPuzzle[9][9] = {
-            {0, 0, 3, 0, 2, 0, 6, 0, 0},
-            {9, 0, 0, 3, 0, 5, 0, 0, 1},
-            {0, 0, 1, 8, 0, 6, 4, 0, 0},
-            {0, 0, 8, 1, 0, 2, 9, 0, 0},
-            {7, 0, 0, 0, 0, 0, 0, 0, 8},
-            {0, 0, 6, 7, 0, 8, 2, 0, 0},
-            {0, 0, 2, 6, 0, 9, 5, 0, 0},
-            {8, 0, 0, 2, 0, 3, 0, 0, 9},
-            {0, 0, 5, 0, 1, 0, 3, 0, 0}
-        };
-        memcpy(grid, mediumPuzzle, sizeof(grid));
+        max_errors = 5;
+        max_hints = 5;
+        InitGrid(55);
         break;
     }
     case Hard: {
-        int hardPuzzle[9][9] = {
-            {0, 0, 0, 0, 0, 0, 0, 1, 2},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 1, 0, 6, 4, 5, 0, 0},
-            {0, 0, 0, 0, 2, 0, 0, 0, 0},
-            {0, 0, 0, 5, 0, 9, 0, 0, 0},
-            {0, 0, 0, 0, 3, 0, 0, 0, 0},
-            {0, 0, 8, 7, 1, 0, 6, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 9, 6, 0, 0, 0, 0, 0, 0}
-        };
-        memcpy(grid, hardPuzzle, sizeof(grid));
+        max_errors = 8;
+        max_hints = 8;
+        InitGrid(45);
         break;
     }
     default:
-        int easyPuzzle[9][9] = {
-            {5, 0, 0, 0, 7, 0, 0, 0, 0},
-            {6, 0, 0, 1, 9, 5, 0, 0, 0},
-            {0, 9, 8, 0, 0, 0, 0, 6, 0},
-            {8, 0, 0, 0, 6, 0, 0, 0, 3},
-            {4, 0, 0, 8, 0, 3, 0, 0, 1},
-            {7, 0, 0, 0, 2, 0, 0, 0, 6},
-            {0, 6, 0, 0, 0, 0, 2, 8, 0},
-            {0, 0, 0, 4, 1, 9, 0, 0, 5},
-            {0, 0, 0, 0, 8, 0, 0, 7, 9}
-        };
-        memcpy(grid, easyPuzzle, sizeof(grid));
+        InitGrid(65);
         break;
     }
     //TODO SARA Init grid_codes
@@ -156,7 +112,7 @@ void SudokuGame::displayGame(HWND hWnd)
     //TODO SARA make new more brushes for blue and red
     SolidBrush brush1(Color(255, 0, 0, 255)); //blue
     SolidBrush brush2(Color(255, 255, 0, 0));  // red
-
+    SolidBrush brush3(Color(255, 255, 165, 0)); // orange
     
 
     // Loop through the grid and draw numbers
@@ -186,35 +142,43 @@ void SudokuGame::displayGame(HWND hWnd)
                 else if (grid_code[i][j] == 'e') {
                     graphics.DrawString(str, 1, &font, point, &brush2);
                 }
+                else if (grid_code[i][j] == 'h')
+                {
+                    graphics.DrawString(str, 1, &font, point, &brush3);
+                }
 
             }
         }
     }
 
-    // To display the error_count
     std::wstring errorCountStr = L"Errors: " + std::to_wstring(error_count);
+    std::wstring hintCountStr = L"Hints: " + std::to_wstring(hint_count);
+    std::wstring scoreStr = L"Score: " + std::to_wstring(score);
 
     RECT rect;
     GetClientRect(hWnd, &rect);
-
-    
     int windowWidth = rect.right - rect.left;
 
-    
-    int textWidth = errorCountStr.length() * 18;  
+    PointF errorPoint(10.0f, 10.0f);
+    int hintTextWidth = hintCountStr.length() * 18;
+    PointF hintPoint((REAL)(windowWidth - hintTextWidth - 10), 10.0f);
 
-    
-    int xPos = (windowWidth - textWidth) / 2;  
+    int scoreTextWidth = scoreStr.length() * 18;
+    PointF scorePoint((REAL)((windowWidth - scoreTextWidth) / 2), 10.0f);
 
-    PointF errorPoint((REAL)xPos, 10);  
+    graphics.DrawString(scoreStr.c_str(), -1, &font, scorePoint, &brush);
     graphics.DrawString(errorCountStr.c_str(), -1, &font, errorPoint, &brush);
+    graphics.DrawString(hintCountStr.c_str(), -1, &font, hintPoint, &brush);
+
 
     EndPaint(hWnd, &ps);
+
 }
 
 void SudokuGame::handleClick(HWND hWnd, int x, int y) {
     if (solving_complete || start_solver)
         return;
+    
     if (x > startX && x < startX + gridSize && y > startY && y < startY + gridSize) {
         int new_j= (x - startX) / cellSize;
         int new_i = (y - startY) / cellSize;
@@ -232,7 +196,7 @@ void SudokuGame::handleKeyPress(HWND hWnd, int keycode)
         return;
     //TODO do not update the cell if its grid_code is "i"
 
-    if (grid_code[current_cell_i][current_cell_j] != 'i') 
+    if (grid_code[current_cell_i][current_cell_j] != 'i' && grid_code[current_cell_i][current_cell_j] != 'h')
     {
         if (keycode >= 49 && (char)keycode <= 57)
         {
@@ -240,8 +204,13 @@ void SudokuGame::handleKeyPress(HWND hWnd, int keycode)
                 return;
             grid[current_cell_i][current_cell_j] = keycode - 48;
             this->updateGridCodes();
-            if (grid_code[current_cell_i][current_cell_j] == 'e')
+            if (grid_code[current_cell_i][current_cell_j] == 'e') {
+                score -= 10;
                 error_count++;
+            }
+            else if (grid_code[current_cell_i][current_cell_j] != 'e') {
+                score+=5;
+            }
             GameOver();
             InvalidateRect(hWnd, NULL, TRUE);
         }
@@ -250,8 +219,14 @@ void SudokuGame::handleKeyPress(HWND hWnd, int keycode)
                 return;
             grid[current_cell_i][current_cell_j] = keycode - 96;
             this->updateGridCodes(); 
-            if (grid_code[current_cell_i][current_cell_j] == 'e')
+            if (grid_code[current_cell_i][current_cell_j] == 'e') {
                 error_count++;
+                score -= 10;
+            }
+            else if (grid_code[current_cell_i][current_cell_j] != 'e')
+            {
+                score += 5;
+            }
             GameOver();
             InvalidateRect(hWnd, NULL, TRUE);
         }
@@ -327,21 +302,7 @@ bool SudokuGame::isSolved()
     return true;
 }
 
-//void SudokuGame::update_solver(HWND hWnd) {
-//    //if (!start_solver)
-//    //    return;
-//    for (int i = 0; i < 9; i++) {
-//        for (int j = 0; j < 9; j++) {
-//            if (grid[i][j] == 0) {
-//                grid[i][j] = 1;
-//                current_cell_i = i;
-//                current_cell_j = j;
-//                this->updateGridCodes();
-//                return;
-//            }
-//        }
-//    }
-//}
+
 
 // Helper function to check if num can be placed at grid[i][j]
 bool SudokuGame::isValid(int row, int col, int num) {
@@ -361,11 +322,11 @@ bool SudokuGame::isValid(int row, int col, int num) {
 }
 
 void SudokuGame::update_solver(HWND hWnd) {
-    if (!start_solver || solving_complete)
-        return;
+    /*if (!start_solver || solving_complete)
+        return;*/
 
     //if current_guess is zero then we need to init current_cell_i and current_cell_j
-    if (start_solver) {
+    /*if (start_solver) */{
         bool allZeros = true;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
@@ -469,17 +430,16 @@ void SudokuGame::Show_Solution(HWND hWnd) {
 void SudokuGame::GameOver()
 {
  
-        if (error_count >= 6) {
-            // Game over due to too many errors
+        if (error_count >= max_errors){
+            // Game over due to too many errors or used up all the allowed hints per level 
             MessageBox(NULL, L"Game Over! You made too many mistakes.", L"Game Over", MB_ICONERROR | MB_OK);
             solving_complete = true;
             start_solver = false;
             return;
         }
-
         if (isSolved()) {
-            // Game over because the puzzle is successfully solved
-            MessageBox(NULL, L"Congratulations! You solved the Sudoku puzzle.", L"Game Complete", MB_ICONINFORMATION | MB_OK);
+            std::wstring scoreMessage = L"Congratulations! You solved the Sudoku puzzle.\nYour score: " + std::to_wstring(score);
+            MessageBox(NULL, scoreMessage.c_str(), L"Game Complete", MB_ICONINFORMATION | MB_OK);
             solving_complete = true;
             start_solver = false;
             return;
@@ -500,5 +460,103 @@ void SudokuGame::clearErrors()
                 grid[i][j] = 0;
             }
         }
+    }
+}
+
+void SudokuGame::InitGrid(int iCellCount)
+{
+    int base[9][9] = {
+            {1,2,3,4,5,6,7,8,9},
+            {4,5,6,7,8,9,1,2,3},
+            {7,8,9,1,2,3,4,5,6},
+            {2,3,4,5,6,7,8,9,1},
+            {5,6,7,8,9,1,2,3,4},
+            {8,9,1,2,3,4,5,6,7},
+            {3,4,5,6,7,8,9,1,2},
+            {6,7,8,9,1,2,3,4,5},
+            {9,1,2,3,4,5,6,7,8}
+    };
+    for (int i = 0; i < 9; ++i)
+        for (int j = 0; j < 9; ++j)
+            grid[i][j] = base[i][j];
+    
+    int shuffleCount = rand() % 10 + 5;
+    for (int k = 0; k < shuffleCount; k++)
+    {
+        int row_shuffle = rand() % 2;
+        int group = rand() % 3;
+        int t1 = rand() % 3;
+        int t2 = rand() % 3;
+        if (t1 == t2)
+            t2 = (t2 + 1) % 3;
+        if (row_shuffle) {
+            for (int i = 0; i < 9; i++)
+            {
+                int v1 = grid[group * 3 + t1][i];
+                grid[group * 3 + t1][i] = grid[group * 3 + t2][i];
+                grid[group * 3 + t2][i] = v1;
+            }
+        }
+        else {
+            for (int i = 0; i < 9; i++)
+            {
+                int v1 = grid[i][group * 3 + t1];
+                grid[i][group * 3 + t1] = grid[i][group * 3 + t2];
+                grid[i][group * 3 + t2] = v1;
+            }
+        }
+    }
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 9; j++)
+        {
+            solution_grid[i][j] = grid[i][j];
+        }
+    }
+    int maskCount = 81 - iCellCount;
+    for (int k = 0; k < maskCount; k++) {
+        int i = rand() % 9;
+        int j = rand() % 9;
+        while (grid[i][j] == 0)
+        {
+            i = rand() % 9;
+            j = rand() % 9;
+        }
+        grid[i][j] = 0;
+    }
+}
+
+void SudokuGame::handleDeleteOrSpaceKey(HWND hWnd, int keycode, int cell_i, int cell_j)
+{
+    if (grid_code[cell_i][cell_j] != 'i' && grid_code[cell_i][cell_j] != 'h') {
+        if (keycode == VK_DELETE || keycode == VK_SPACE)
+        {
+            grid[cell_i][cell_j] = 0;
+            grid_code[cell_i][cell_j] = 'u';
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+    } 
+}
+
+void SudokuGame::handleHint(HWND hWnd)
+{
+    if (current_cell_i == -1 || current_cell_j == -1) {
+        MessageBox(hWnd, L"Please select a cell before requesting a hint.", L"Hint Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+    if (hint_count >= max_hints)
+    {
+        MessageBox(NULL, L"You've asked for too many hints.", L"Good Luck", MB_ICONERROR | MB_OK);
+        return;
+    }
+    else {
+        hint_count++;
+        
+        grid[current_cell_i][current_cell_j] = solution_grid[current_cell_i][current_cell_j];
+        grid_code[current_cell_i][current_cell_j] = 'i';
+        score -= 5;
+        InvalidateRect(hWnd, NULL, TRUE);
+        UpdateWindow(hWnd);
+        GameOver();
     }
 }

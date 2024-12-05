@@ -17,6 +17,7 @@ using namespace Gdiplus;
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+INT_PTR        gTimerId;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -35,6 +36,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+    
 
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -127,7 +129,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
 
-   SetTimer(hWnd, 1, 100, TimerProc);
+   gTimerId = SetTimer(hWnd, 1, 100, TimerProc);
 
    return TRUE;
 }
@@ -176,13 +178,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case ID_Start_Solver: 
                 game->clearErrors(); 
                 game->start_solver = true;
+                game->solving_complete = false;
                 break;
 
             case ID_SHOW_SOLUTION:
+                game->clearErrors();
                 game->Show_Solution(hWnd);
                 InvalidateRect(hWnd, NULL, TRUE);
                 UpdateWindow(hWnd);
                 break;
+
+            case ID_SHOWHINT:
+                game->handleHint(hWnd);
+                break;
+
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -224,6 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         int keyCode = static_cast<int>(wParam); // Get the virtual key code
         // Call your game logic to handle the key press
         game->handleKeyPress(hWnd, keyCode);
+        game->handleDeleteOrSpaceKey(hWnd, keyCode, game->current_cell_i, game->current_cell_j);
         break;
     }
 
@@ -256,7 +266,9 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 VOID TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
     if (!game->start_solver || game->isSolved())
         return;
+    //KillTimer(hwnd, gTimerId);
     // Your timer's logic here
     game->update_solver(hwnd);
     InvalidateRect(hwnd, NULL, TRUE); 
+    //gTimerId = SetTimer(hwnd, 1, 100, TimerProc);
 }

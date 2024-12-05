@@ -1,4 +1,7 @@
-﻿  SodukoGame.cpp
-C:\Users\sarah\Desktop\Soduko_Project\Soduko\Soduko\SodukoGame.cpp(204,19): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\sarah\Desktop\Soduko_Project\Soduko\Soduko\SodukoGame.cpp(499,33): warning C4553: '==': result of expression not used; did you intend '='?
+﻿  Program.cpp
+  SodukoGame.cpp
+C:\Users\sarah\Desktop\Soduko_Project\Soduko\Soduko\SodukoGame.cpp(163,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\sarah\Desktop\Soduko_Project\Soduko\Soduko\SodukoGame.cpp(166,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\sarah\Desktop\Soduko_Project\Soduko\Soduko\SodukoGame.cpp(459,33): warning C4553: '==': result of expression not used; did you intend '='?
+  Generating Code...
   Soduko.vcxproj -> C:\Users\sarah\Desktop\Soduko_Project\Soduko\x64\Debug\Soduko.exe
