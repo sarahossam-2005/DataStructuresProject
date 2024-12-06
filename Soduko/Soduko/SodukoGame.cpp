@@ -544,6 +544,11 @@ void SudokuGame::handleHint(HWND hWnd)
         MessageBox(hWnd, L"Please select a cell before requesting a hint.", L"Hint Error", MB_OK | MB_ICONERROR);
         return;
     }
+    if (grid_code[current_cell_i][current_cell_j]=='i')
+    {
+        MessageBox(hWnd, L"Please select a nonempty cell.", L"Hint Error", MB_OK | MB_ICONERROR);
+        return;
+    }
     if (hint_count >= max_hints)
     {
         MessageBox(NULL, L"You've asked for too many hints.", L"Good Luck", MB_ICONERROR | MB_OK);
